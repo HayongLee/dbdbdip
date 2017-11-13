@@ -1,6 +1,6 @@
 # dbdbdip
 
-movie
+movie database
 
 [project] Database Programming (Database Architecture)
 
