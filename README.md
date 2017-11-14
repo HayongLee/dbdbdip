@@ -6,4 +6,4 @@ movie database
 
 project in process
 
-junyeong kim, seungbeom han, haechan choi, hayong lee
+Junyeong Kim, seungbeom han, haechan choi, hayong lee
