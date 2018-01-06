@@ -1,0 +1,32 @@
+DECLARE
+    cinemaId NUMBER;
+    theaterId NUMBER;
+    seats num_array;
+    dDate DATE;
+    result VARCHAR2(100);
+    memberId NUMBER;
+    
+BEGIN
+
+    /*영화관 설정*/
+    cinemaId := 1;
+    theaterId := 1;
+    /*날짜 설정: 예매 시간이 데이터 베이스에 없으면 오류가 난다.*/
+    dDate := TO_DATE('2017/12/04 11:00','yyyy/mm/dd hh24:mi');
+    
+    
+    /*좌석 설정 extend(예약할 좌석수) 후, 좌석 ID를 넣어주는 식으로 값을 넣어준다*/
+    seats := num_array();
+    seats.extend(3);
+    seats(1) := 3;
+    seats(2) := 4;
+    seats(3) := 6;
+
+    /*아이디 설정*/
+    memberId := 1;
+
+    /*프로시저 실행*/
+    reserve_movie(cinemaId,theaterId,dDate,seats,memberId,result);    
+    
+    DBMS_OUTPUT.PUT_LINE('result:'||result);
+END;

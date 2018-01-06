@@ -1,0 +1,25 @@
+CREATE OR REPLACE FUNCTION ST2015113456.isReservable(
+nCinemaId NUMBER,
+nTheaterId NUMBER,
+nSeatId NUMBER,
+dSchedule Date)
+/*좌석이 현재 예약중인지 확인하는 함수*/
+
+RETURN NUMBER IS
+nCnt NUMBER;
+BEGIN
+
+    select COUNT(*)
+    into nCnt
+    from seat_reservation
+    where CINEMAID = nCinemaId
+    and THEATERID = nTheaterId
+    and SEATID = nSeatId
+    and TO_char(SCHEDULEDATE,'YY-MM-DD-hh24:mi') = TO_char(dschedule,'YY-MM-DD-hh24:mi');
+    
+    IF (nCnt>0) THEN
+        RETURN 0;
+    END IF;
+    
+    RETURN 1;
+END;

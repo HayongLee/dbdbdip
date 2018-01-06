@@ -1,0 +1,104 @@
+CREATE OR REPLACE procedure ST2015113456.reserve_movie(
+    nCinemaId IN NUMBER,
+    nTheaterId IN NUMBER,
+    dSchedule IN DATE,
+    arrSeat IN num_array,
+    nMemberId IN NUMBER,
+    result OUT VARCHAR2)
+
+IS
+    input_data_not_valid EXCEPTION;
+    seat_already_reserved EXCEPTION;
+    nMovieId NUMBER;
+    reservable NUMBER;
+    sumOfAmount NUMBER; 
+    nCnt NUMBER;
+    nGrade NUMBER;
+    nRegistrationId NUMBER;
+BEGIN
+    sumOfAmount :=0;
+    nRegistrationId :=0;
+    result := '';
+    
+    /*영화 ID 받아오기*/
+    select movieId 
+    into nMovieId
+    from SCREENING_SCHEDULE
+    where THEATERID = ntheaterId 
+    and CINEMAID = nCinemaId 
+    and to_char(SCHEDULEDATE,'MM-DD-HH-MM') = to_char(dSchedule,'MM-DD-HH-MM');
+    
+    /*좌석 예매 가능 여부 확인*/
+    DBMS_OUTPUT.PUT_LINE('#좌석 예매 가능 여부 확인 시작.');
+    FOR i IN 1..arrSeat.count LOOP
+        reservable:=isReservable(nCinemaId,nTheaterId,arrSeat(i),dSchedule);
+        IF (reservable = 0) THEN 
+               DBMS_OUTPUT.PUT_LINE('좌석:'||arrSeat(i)||' 사용불가');
+               RAISE seat_already_reserved;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('좌석:'||arrSeat(i)||' 이용가능');
+        END IF;
+    END LOOP;
+   
+    /*전체 가격 구하기*/
+    DBMS_OUTPUT.PUT_LINE('#가격 계산 시작.');
+    FOR i IN 1..arrSeat.count LOOP
+        DBMS_OUTPUT.PUT_LINE('[좌석:'||arrSeat(i)||']가격:'||getPrice(nCinemaId,nTheaterId,arrSeat(i),dSchedule)||' 추가');
+        sumOfAmount := sumOfAmount + getPrice(nCinemaId,nTheaterId,arrSeat(i),dSchedule); 
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('총 가격:'||sumOfAmount);
+  
+    SELECT MAX(reservationId)
+    into nRegistrationId
+    from reservation;
+    
+    nRegistrationId := nRegistrationId +1;
+    DBMS_OUTPUT.PUT_LINE('nRegistrationId'||nRegistrationId);
+    
+    
+    /*예매 정보 등록*/
+    DBMS_OUTPUT.PUT_LINE('#예매 테이블 삽입.');
+    INSERT INTO reservation
+         (RESERVATIONID,THEATERID,CINEMAID,SCHEDULEDATE)
+     VALUES
+          (nRegistrationId,nTheaterID,nCinemaId,dSchedule);
+     COMMIT;
+     
+     /*예매 좌석상태 변경*/
+     DBMS_OUTPUT.PUT_LINE('#예매 좌석상태 변경.');
+     FOR i IN 1..arrSeat.count LOOP
+      INSERT INTO seat_reservation
+         (RESERVATIONID,THEATERID,CINEMAID, SEATID,SCHEDULEDATE)
+     VALUES
+          (nRegistrationId,nTheaterID, nCinemaId,arrSeat(i),dSchedule);
+     COMMIT; 
+        DBMS_OUTPUT.PUT_LINE('좌석:'||arrSeat(i)||' 예약 상태로 변경');
+
+    END LOOP;
+     
+     /*결제 정보 갱신*/
+     DBMS_OUTPUT.PUT_LINE('#결제 정보 갱신.');
+     INSERT INTO RESERVATION_PAYMENT
+     (RESERVATIONID,TOTALAMOUNT,PAYMENTDATE,isMember,SCHEDULEDATE)
+     VALUES
+     (nRegistrationId, sumOfAmount,SYSDATE,1,dSchedule);
+     COMMIT;
+     
+    /*회원 결제 정보 저장*/
+     DBMS_OUTPUT.PUT_LINE('#회원 결제 정보 갱신.');
+     INSERT INTO MEMBERPAYMENT
+     (RESERVATIONID,MEMBERID,SCHEDULEDATE)
+     VALUES
+     (nRegistrationId, nMemberId,dSchedule);
+     COMMIT;
+         
+     DBMS_OUTPUT.PUT_LINE('###예약 완료!!!###');
+    /*예외 출력*/
+    EXCEPTION 
+    WHEN seat_already_reserved THEN
+    result := '좌석이 이미 예약되었습니다';
+    WHEN OTHERS THEN
+    ROLLBACK;
+    result:=SQLCODE;
+    
+END;

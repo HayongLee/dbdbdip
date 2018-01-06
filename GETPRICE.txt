@@ -1,0 +1,20 @@
+CREATE OR REPLACE FUNCTION ST2015113456.getPrice(
+nCinemaId NUMBER,
+nTheaterId NUMBER,
+nSeatId NUMBER,
+dSchedule DATE)
+RETURN NUMBER IS
+nGrade NUMBER;
+nPrice NUMBER;
+
+BEGIN
+
+    nGrade := getGrade(nCinemaId,nTheaterId,nSeatId,dSchedule);
+    /*grade를 통해서 가격 구하기*/
+    select PRICE
+    into nPrice
+    from PRICE
+    where grade = nGrade;
+   
+    RETURN nPrice;
+END;

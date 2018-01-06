@@ -1,0 +1,37 @@
+CREATE OR REPLACE FUNCTION ST2015113456.getGrade(
+nCinemaId NUMBER,
+nTheaterId NUMBER,
+nSeatId NUMBER,
+dSchedule DATE)
+RETURN NUMBER IS
+nGrade NUMBER;
+cHour CHAR(2);
+nTimeRange NUMBER;
+nPrice NUMBER;
+
+BEGIN
+    cHour := to_char(dSchedule,'HH');
+    /*예매 시간대 오전/오후인지 구하기 */ 
+    IF (cHour >'00' and cHour<'12') THEN
+        nTimeRange := 0;
+    ELSE
+        nTimeRange := 1;
+    END IF;
+    
+    /*가격 grade 구하기*/
+    select grade
+    into nGrade
+    from grade
+    where CINEMAID = nCinemaId
+    and THEATERID = nTheaterId
+    and SEATID = nSeatId
+    and TIMERANGE = nTimeRange;
+   
+    RETURN nGrade;
+        /*예외 출력*/
+    EXCEPTION 
+    WHEN NO_DATA_FOUND THEN
+    return 3;
+
+    
+END;
